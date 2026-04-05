@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  itemType  String   @default("OTHER")
+  createdAt DateTime @default(now())
+
+  items Item[]
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+
+  items Item[]
+}
+
+model Item {
+  id             String   @id @default(cuid())
+  name           String
+  categoryId     String
+  vendorId       String
+  purchaseDate   DateTime
+  quantityBought Int
+  buyingPrice    Float
+  sellingPrice   Float
+  photoUrl       String?
+  notes          String?
+  quantitySold   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id])
+  vendor   Vendor   @relation(fields: [vendorId], references: [id])
+  sales    Sale[]
+}
+
+model Sale {
+  id         String   @id @default(cuid())
+  itemId     String
+  buyerName  String
+  quantity   Int
+  salePrice  Float
+  saleDate   DateTime
+  isNegative Boolean  @default(false)
+  voided     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  item Item @relation(fields: [itemId], references: [id])
+}

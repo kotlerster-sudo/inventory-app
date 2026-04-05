@@ -36,6 +36,15 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local sqlite db
+*.db
+*.db-journal
+
+# uploaded photos (dev only)
+/public/uploads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
