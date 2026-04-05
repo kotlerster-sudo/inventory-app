@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { SellForm } from "@/components/sell/SellForm";
 import Link from "next/link";
 import { History } from "lucide-react";

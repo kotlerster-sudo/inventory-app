@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { StockForm } from "@/components/stock/StockForm";
 import Link from "next/link";

@@ -12,4 +12,35 @@ body {
   background-color: #f9fafb;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #111827;
+  /* Remove 300ms tap delay on mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection flash on tap */
+* {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enable selection for inputs and text content */
+input, textarea, select, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Press feedback for all clickable elements */
+a, button, [role="button"] {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+a:active, button:active, [role="button"]:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }

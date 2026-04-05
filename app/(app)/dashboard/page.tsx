@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getDashboardStats } from "@/lib/actions/dashboard";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
