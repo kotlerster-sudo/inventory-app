@@ -65,7 +65,9 @@ export async function getItems(filters?: {
     where: {
       categoryId: filters?.categoryId || undefined,
       vendorId: filters?.vendorId || undefined,
-      name: filters?.search ? { contains: filters.search } : undefined,
+      name: filters?.search
+        ? { contains: filters.search, mode: "insensitive" }
+        : undefined,
     },
     include: { category: true, vendor: true },
     orderBy: { createdAt: "desc" },
@@ -85,12 +87,12 @@ export async function getItem(id: string) {
 
 export async function searchItems(query: string) {
   const items = await prisma.item.findMany({
-    where: {
-      name: { contains: query },
-    },
+    where: query.trim()
+      ? { name: { contains: query, mode: "insensitive" } }
+      : undefined,                          // empty query → return all items
     include: { category: true },
-    take: 20,
-    orderBy: { name: "asc" },
+    take: 30,
+    orderBy: { createdAt: "desc" },         // newest first so recent additions appear at top
   });
   return items.map((item) => ({
     id: item.id,

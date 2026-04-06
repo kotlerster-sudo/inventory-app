@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -21,7 +20,6 @@ type SearchResult = {
 };
 
 export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -30,30 +28,31 @@ export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) 
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // If preselected item, load it
-  useEffect(() => {
-    if (preselectedItemId) {
-      (async () => {
-        const res = await searchItems("");
-        const item = res.find((i) => i.id === preselectedItemId);
-        if (item) setSelected(item);
-      })();
-    }
-  }, [preselectedItemId]);
+  const loadItems = useCallback(async (q: string) => {
+    setSearching(true);
+    const res = await searchItems(q);
+    setResults(res);
+    setSearching(false);
+  }, []);
 
+  // Load all items on mount (so the list is visible without typing)
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
+    loadItems("");
+  }, [loadItems]);
+
+  // If preselected item arrives via URL
+  useEffect(() => {
+    if (preselectedItemId && results.length > 0) {
+      const item = results.find((i) => i.id === preselectedItemId);
+      if (item) setSelected(item);
     }
-    const timer = setTimeout(async () => {
-      setSearching(true);
-      const res = await searchItems(query);
-      setResults(res);
-      setSearching(false);
-    }, 300);
+  }, [preselectedItemId, results]);
+
+  // Debounced search as user types
+  useEffect(() => {
+    const timer = setTimeout(() => loadItems(query), 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, loadItems]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -74,18 +73,13 @@ export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) 
     setErrors({});
 
     startTransition(async () => {
-      await createSale({
-        itemId: selected.id,
-        buyerName,
-        quantity,
-        salePrice,
-        saleDate,
-      });
+      await createSale({ itemId: selected.id, buyerName, quantity, salePrice, saleDate });
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
         setSelected(null);
         setQuery("");
+        loadItems("");
       }, 1500);
     });
   }
@@ -104,51 +98,49 @@ export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) 
 
   return (
     <div className="space-y-4">
-      {/* Item search */}
       {!selected && (
         <Card>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Search Item</p>
-          <div className="relative">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Select Item</p>
+          <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type item name..."
+              placeholder="Search by name…"
               className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
             />
             {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
           </div>
 
-          {results.length > 0 && (
-            <div className="mt-2 space-y-1.5">
+          {results.length > 0 ? (
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
               {results.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => { setSelected(item); setQuery(""); setResults([]); }}
-                  className="w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-indigo-50 border border-gray-100 transition-colors"
+                  onClick={() => { setSelected(item); }}
+                  className="w-full text-left flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-indigo-50 active:bg-indigo-100 border border-gray-100 transition-colors"
                 >
                   <div>
                     <p className="text-sm font-medium text-gray-800">{item.name}</p>
                     <p className="text-xs text-gray-500">{item.category} · MRP {formatCurrency(item.sellingPrice)}</p>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={item.available < 0 ? "red" : item.available <= 3 ? "yellow" : "green"}>
-                      {item.available} left
-                    </Badge>
-                  </div>
+                  <Badge variant={item.available < 0 ? "red" : item.available <= 3 ? "yellow" : "green"}>
+                    {item.available} left
+                  </Badge>
                 </button>
               ))}
             </div>
-          )}
-
-          {query.length > 0 && !searching && results.length === 0 && (
-            <p className="text-sm text-gray-400 mt-2 text-center">No items found</p>
+          ) : (
+            !searching && (
+              <p className="text-sm text-gray-400 text-center py-4">
+                {query ? "No items found" : "No items in stock yet"}
+              </p>
+            )
           )}
         </Card>
       )}
 
-      {/* Selected item + sale form */}
       {selected && (
         <Card>
           <div className="flex items-start justify-between mb-4">
@@ -176,40 +168,12 @@ export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) 
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Buyer Name"
-              name="buyerName"
-              placeholder="Customer name"
-              error={errors.buyerName}
-            />
-
+            <Input label="Buyer Name" name="buyerName" placeholder="Customer name" error={errors.buyerName} />
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Quantity"
-                name="quantity"
-                type="number"
-                min="1"
-                defaultValue="1"
-                error={errors.quantity}
-              />
-              <Input
-                label="Sale Price (₹)"
-                name="salePrice"
-                type="number"
-                step="0.01"
-                defaultValue={selected.sellingPrice}
-                error={errors.salePrice}
-              />
+              <Input label="Quantity" name="quantity" type="number" min="1" defaultValue="1" error={errors.quantity} />
+              <Input label="Sale Price (₹)" name="salePrice" type="number" step="0.01" defaultValue={selected.sellingPrice} error={errors.salePrice} />
             </div>
-
-            <Input
-              label="Sale Date"
-              name="saleDate"
-              type="date"
-              defaultValue={today}
-              error={errors.saleDate}
-            />
-
+            <Input label="Sale Date" name="saleDate" type="date" defaultValue={today} error={errors.saleDate} />
             <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-500 space-y-1">
               <div className="flex justify-between">
                 <span>Suggested MRP</span>
@@ -220,9 +184,8 @@ export function SellForm({ preselectedItemId }: { preselectedItemId?: string }) 
                 <span className="font-medium text-gray-700">{formatCurrency(selected.buyingPrice)}</span>
               </div>
             </div>
-
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Recording...</> : "Record Sale"}
+              {isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Recording…</> : "Record Sale"}
             </Button>
           </form>
         </Card>

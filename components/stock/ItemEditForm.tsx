@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { updateItem, deleteItem } from "@/lib/actions/items";
-import { compressImage } from "@/lib/compress";
-import { Camera, X, Loader2, Trash2 } from "lucide-react";
-import Image from "next/image";
+import { PhotoPicker } from "./PhotoPicker";
+import { Loader2, Trash2 } from "lucide-react";
 
 type Category = { id: string; name: string; itemType: string };
 type Vendor = { id: string; name: string };
@@ -33,29 +32,6 @@ export function ItemEditForm({ item, categories, vendors }: { item: Item; catego
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadStatus("Compressing…");
-    try {
-      const compressed = await compressImage(file, 200);
-      const sizeKB = Math.round(compressed.size / 1024);
-      setUploadStatus(`Uploading (${sizeKB} KB)…`);
-      const fd = new FormData();
-      fd.append("file", compressed);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) setPhotoUrl(data.url);
-      setUploadStatus("");
-    } catch {
-      setUploadStatus("Failed to compress");
-    } finally {
-      setUploading(false);
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -88,36 +64,15 @@ export function ItemEditForm({ item, categories, vendors }: { item: Item; catego
   return (
     <Card>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Photo */}
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Photo</p>
-          <div
-            onClick={() => fileRef.current?.click()}
-            className="cursor-pointer w-full h-36 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-400 transition-colors flex items-center justify-center bg-gray-50 relative overflow-hidden"
-          >
-            {uploading && (
-              <div className="flex flex-col items-center gap-1">
-                <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-                {uploadStatus && <p className="text-xs text-indigo-500">{uploadStatus}</p>}
-              </div>
-            )}
-            {!uploading && photoUrl && (
-              <>
-                <Image src={photoUrl} alt="Product" fill className="object-cover" />
-                <button type="button" onClick={(e) => { e.stopPropagation(); setPhotoUrl(null); }} className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-                  <X className="w-4 h-4 text-gray-600" />
-                </button>
-              </>
-            )}
-            {!uploading && !photoUrl && (
-              <div className="text-center">
-                <Camera className="w-7 h-7 text-gray-300 mx-auto mb-1" />
-                <p className="text-xs text-gray-400">Tap to change photo</p>
-              </div>
-            )}
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
-        </div>
+        <PhotoPicker
+          photoUrl={photoUrl}
+          uploading={uploading}
+          uploadStatus={uploadStatus}
+          onPhotoChange={setPhotoUrl}
+          onClear={() => setPhotoUrl(null)}
+          onUploadStart={(s) => { setUploading(true); setUploadStatus(s); }}
+          onUploadEnd={() => { setUploading(false); setUploadStatus(""); }}
+        />
 
         <Input label="Item Name" name="name" defaultValue={item.name} />
 
