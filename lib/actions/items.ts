@@ -56,6 +56,8 @@ export async function deleteItem(id: string) {
   revalidatePath("/dashboard");
 }
 
+const ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
+
 export async function getItems(filters?: {
   categoryId?: string;
   vendorId?: string;
@@ -68,6 +70,7 @@ export async function getItems(filters?: {
       name: filters?.search
         ? { contains: filters.search, mode: "insensitive" }
         : undefined,
+      category: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
     },
     include: { category: true, vendor: true },
     orderBy: { createdAt: "desc" },
@@ -87,12 +90,13 @@ export async function getItem(id: string) {
 
 export async function searchItems(query: string) {
   const items = await prisma.item.findMany({
-    where: query.trim()
-      ? { name: { contains: query, mode: "insensitive" } }
-      : undefined,                          // empty query → return all items
+    where: {
+      ...(query.trim() ? { name: { contains: query, mode: "insensitive" } } : {}),
+      category: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
+    },
     include: { category: true },
     take: 30,
-    orderBy: { createdAt: "desc" },         // newest first so recent additions appear at top
+    orderBy: { createdAt: "desc" },
   });
   return items.map((item) => ({
     id: item.id,

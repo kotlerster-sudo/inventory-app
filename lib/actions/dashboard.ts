@@ -2,11 +2,14 @@
 
 import { prisma } from "@/lib/prisma";
 
+const ENV_ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
+
 export async function getDashboardStats(typeFilter?: string) {
-  const categoryFilter =
-    typeFilter && typeFilter !== "ALL"
-      ? { category: { itemType: typeFilter } }
-      : undefined;
+  // If env locks to a specific store type, always use that regardless of URL param
+  const effectiveType = ENV_ITEM_TYPE || (typeFilter !== "ALL" ? typeFilter : undefined);
+  const categoryFilter = effectiveType
+    ? { category: { itemType: effectiveType } }
+    : undefined;
 
   const [items, sales, categories] = await Promise.all([
     prisma.item.findMany({

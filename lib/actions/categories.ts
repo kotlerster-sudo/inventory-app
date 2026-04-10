@@ -3,8 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
+const ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
+
 export const getCategories = unstable_cache(
-  async () => prisma.category.findMany({ orderBy: { name: "asc" } }),
+  async () => prisma.category.findMany({
+    where: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
+    orderBy: { name: "asc" },
+  }),
   ["categories"],
   { tags: ["categories"] }
 );

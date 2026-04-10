@@ -40,8 +40,8 @@ export function LoginForm() {
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
             <Lock className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">Saree &amp; Jewellery Management</p>
+          <h1 className="text-2xl font-bold text-gray-900">{process.env.NEXT_PUBLIC_STORE_NAME ?? "Inventory"}</h1>
+          <p className="text-sm text-gray-500 mt-1">Stock &amp; Sales Management</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Plus, Loader2 } from "lucide-react";
 import { ITEM_TYPES, TYPE_LABELS } from "@/lib/utils";
 
-export function AddCategoryForm() {
+export function AddCategoryForm({ defaultItemType }: { defaultItemType?: string }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -42,11 +42,18 @@ export function AddCategoryForm() {
       <p className="text-sm font-semibold text-gray-700 mb-3">New Category</p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <Input name="name" placeholder="e.g. Kanjivaram Silk Saree" required />
-        <Select name="itemType" defaultValue="SAREE">
-          {ITEM_TYPES.map((t) => (
-            <option key={t} value={t}>{TYPE_LABELS[t]}</option>
-          ))}
-        </Select>
+        {defaultItemType ? (
+          <>
+            <input type="hidden" name="itemType" value={defaultItemType} />
+            <p className="text-xs text-gray-400">Type: {TYPE_LABELS[defaultItemType] ?? defaultItemType}</p>
+          </>
+        ) : (
+          <Select name="itemType" defaultValue="SAREE">
+            {ITEM_TYPES.map((t) => (
+              <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+            ))}
+          </Select>
+        )}
         <div className="flex gap-2">
           <Button type="submit" disabled={isPending} className="flex-1">
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}

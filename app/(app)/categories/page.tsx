@@ -9,7 +9,9 @@ import { Package } from "lucide-react";
 import { AddCategoryForm } from "@/components/categories/AddCategoryForm";
 
 export default async function CategoriesPage() {
+  const ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
   const categories = await prisma.category.findMany({
+    where: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
     orderBy: { name: "asc" },
     include: { _count: { select: { items: true } } },
   });
@@ -20,7 +22,7 @@ export default async function CategoriesPage() {
         <h1 className="text-xl font-bold text-gray-900">Categories</h1>
       </div>
 
-      <AddCategoryForm />
+      <AddCategoryForm defaultItemType={ITEM_TYPE ?? undefined} />
 
       {categories.length === 0 ? (
         <EmptyState title="No categories yet" description="Add your first category above." />

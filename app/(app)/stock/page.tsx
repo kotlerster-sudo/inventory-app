@@ -15,11 +15,14 @@ export default async function StockPage({
 }) {
   const params = await searchParams;
 
+  const ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
+
   const items = await prisma.item.findMany({
     where: {
       categoryId: params.categoryId || undefined,
       vendorId: params.vendorId || undefined,
       name: params.q ? { contains: params.q } : undefined,
+      category: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
     },
     include: { category: true, vendor: true },
     orderBy: { createdAt: "desc" },
@@ -34,7 +37,10 @@ export default async function StockPage({
       })
     : items;
 
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    where: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div className="space-y-4">

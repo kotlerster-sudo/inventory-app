@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const name = process.env.NEXT_PUBLIC_STORE_NAME ?? "Inventory";
+  const short = name.split(" ")[0];
   return {
-    name: "Saree & Jewellery Inventory",
-    short_name: "Inventory",
-    description: "Stock and sales management for sarees and jewellery",
+    name,
+    short_name: short,
+    description: `Stock and sales management — ${name}`,
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#f9fafb",

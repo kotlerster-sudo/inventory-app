@@ -5,8 +5,12 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function NewStockPage() {
+  const ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
   const [categories, vendors] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: ITEM_TYPE ? { itemType: ITEM_TYPE } : undefined,
+      orderBy: { name: "asc" },
+    }),
     prisma.vendor.findMany({ orderBy: { name: "asc" } }),
   ]);
 
