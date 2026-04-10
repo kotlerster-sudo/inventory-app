@@ -1,16 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Saree & Jewellery Inventory",
-  description: "Stock and sales management for sarees and jewellery",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Inventory",
-  },
-  formatDetection: { telephone: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const name = process.env.NEXT_PUBLIC_STORE_NAME ?? "Inventory";
+  return {
+    title: name,
+    description: `Stock and sales management — ${name}`,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: name,
+    },
+    formatDetection: { telephone: false },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#4f46e5",
