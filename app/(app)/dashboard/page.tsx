@@ -20,7 +20,8 @@ export default async function DashboardPage({
   searchParams: Promise<{ type?: string }>;
 }) {
   const { type } = await searchParams;
-  const typeFilter = type || "ALL";
+  const ENV_ITEM_TYPE = process.env.NEXT_PUBLIC_ITEM_TYPE;
+  const typeFilter = ENV_ITEM_TYPE || type || "ALL";
   const stats = await getDashboardStats(typeFilter === "ALL" ? undefined : typeFilter);
 
   const kpis = [
@@ -90,29 +91,10 @@ export default async function DashboardPage({
     },
   ];
 
-  const tabs = ["ALL", "SAREE", "JEWELLERY", "OTHER"];
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between pt-2">
         <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-      </div>
-
-      {/* Type filter tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {tabs.map((tab) => (
-          <Link
-            key={tab}
-            href={`/dashboard?type=${tab}`}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              typeFilter === tab
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            {tab === "ALL" ? "All" : TYPE_LABELS[tab]}
-          </Link>
-        ))}
       </div>
 
       {/* Alerts */}
