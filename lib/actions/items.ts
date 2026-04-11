@@ -51,6 +51,7 @@ export async function updateItem(
 }
 
 export async function deleteItem(id: string) {
+  await prisma.sale.deleteMany({ where: { itemId: id } });
   await prisma.item.delete({ where: { id } });
   revalidatePath("/stock");
   revalidatePath("/dashboard");
